@@ -39,6 +39,17 @@
      (paren :initarg :paren :accessor call-paren)
      (arguments :initarg :arguments :accessor call-arguments)))
 
+(defclass get-expr (expr)
+    ((object :initarg :object :accessor get-object)
+     (name :initarg :name :accessor get-name)))
+
+(defclass set-expr (expr)
+    ((object :initarg :object :accessor set-object)
+     (name :initarg :name :accessor set-name)
+     (value :initarg :value :accessor set-value)))
+
+(defclass this-expr (expr)
+    ((keyword :initarg :keyword :accessor this-keyword)))
 
 ;; Base class for statements
 (defclass stmt () ())
@@ -74,6 +85,10 @@
     ((name :initarg :name :accessor stmt-function-name)
      (params :initarg :params :accessor stmt-function-params)
      (body :initarg :body :accessor stmt-function-body)))
+
+(defclass class-stmt (stmt)
+    ((name :initarg :name :accessor stmt-class-name)
+     (methods :initarg :methods :accessor stmt-class-methods)))
 
 ;; Represents a return statement
 (defclass return-stmt (stmt)

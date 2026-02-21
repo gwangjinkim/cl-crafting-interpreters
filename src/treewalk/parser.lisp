@@ -71,6 +71,7 @@
 (defun lox-declaration ()
   (handler-case
       (cond
+       ((match-token :class) (class-declaration))
        ((match-token :fun) (function-declaration "function"))
        ((match-token :var) (var-declaration))
        (t (statement)))
@@ -78,6 +79,15 @@
                      (format *error-output* "~A~%" c)
                      (synchronize)
                      nil)))
+
+(defun class-declaration ()
+  (let ((name (consume :identifier "Expect class name.")))
+    (consume :left-brace "Expect '{' before class body.")
+    (let ((methods nil))
+      (loop while (and (not (lox-check-type :right-brace)) (not (is-at-end-p)))
+            do (push (function-declaration "method") methods))
+      (consume :right-brace "Expect '}' after class body.")
+      (make-instance 'class-stmt :name name :methods (nreverse methods)))))
 
 (defun var-declaration ()
   (let ((name (consume :identifier "Expect variable name.")))
@@ -198,9 +208,12 @@
     (if (match-token :equal)
         (let ((equals (previous-token))
               (value (assignment)))
-          (if (typep expr 'variable-expr)
-              (make-instance 'assign-expr :name (variable-name expr) :value value)
-              (error 'lox-parse-error :token equals :message "Invalid assignment target.")))
+          (cond
+           ((typep expr 'variable-expr)
+             (make-instance 'assign-expr :name (variable-name expr) :value value))
+           ((typep expr 'get-expr)
+             (make-instance 'set-expr :object (get-object expr) :name (get-name expr) :value value))
+           (t (error 'lox-parse-error :token equals :message "Invalid assignment target."))))
         expr)))
 
 (defun logic-or ()
@@ -265,6 +278,9 @@
      (cond
       ((match-token :left-paren)
         (setf expr (finish-call expr)))
+      ((match-token :dot)
+        (let ((name (consume :identifier "Expect property name after '.'.")))
+          (setf expr (make-instance 'get-expr :object expr :name name))))
       (t (return))))
     expr))
 
@@ -284,6 +300,8 @@
    ((match-token :false) (make-instance 'literal-expr :value nil))
    ((match-token :true) (make-instance 'literal-expr :value t))
    ((match-token :nil) (make-instance 'literal-expr :value nil)) ; Represented as Lisp nil
+
+   ((match-token :this) (make-instance 'this-expr :keyword (previous-token)))
 
    ((match-token :number :string)
      (make-instance 'literal-expr :value (token-literal (previous-token))))

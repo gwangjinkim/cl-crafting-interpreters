@@ -37,16 +37,25 @@ make treewalk
 *Initialized Git, defined the project ASDF systems, and configured the central test runner (`make test`). Lisp's ASDF system allows us to elegantly partition the Tree-walk, VM, and tests into separate loadable definitions within the same physical directory structure.*
 
 ### Milestone 1: Lexical Analysis (Scanner)
+
 *Built the lexical analyzer for the Tree-walk Interpreter. Lisp is remarkably well-suited for scanning text. By using local functions (`labels`) for state management (`advance`, `peek`, `match`), we avoided the need for complex object-oriented state tracking or messy global variables. The resulting single-pass scanner is elegant and maps the Lox syntax (as defined in `LEX-SPEC.md`) cleanly into Lisp structs. We also utilized Lisp's dynamic `hash-table` and `string-downcase` to efficiently route reserved keywords natively without relying on verbose string switch-cases common in Java or C.*
 
 ### Milestone 2: Abstract Syntax Tree & Parser
+
 *Implemented the AST and the recursive descent parser. In Java, Bob Nystrom has to build a heavily boilerplate tool to generate Java classes and set up the Visitor pattern to emulate double dispatch. In Common Lisp, we simply defined the AST hierarchy using `defclass`. The parser leverages Lisp's dynamic and generic object system (CLOS) to instantly instantiate these types. This avoids thousands of lines of boilerplate and sets the foundation for an elegant evaluator using `defmethod`.*
 
 ### Milestone 3: Evaluation (Tree-walking)
+
 *Implemented the evaluation engine. While Java requires double-dispatch Visitor pattern boilerplate, Common Lisp's CLOS handles this natively and transparently. We defined a generic `evaluate` function and provided `defmethod` implementations for each AST node type (`literal-expr`, `binary-expr`, etc.). The Lisp runtime dynamically dispatches to the correct method based on the node's type, making the evaluator extremely clean and extensible.*
 
 ### Milestone 4.5: Control Flow
+
 *Implemented traditional 'if', 'while', and 'for' control flow structures. In Java, building the environment stack requires messy scoping objects. Common Lisp's dynamic scoping (e.g. `(let ((*environment* ...)) ...)`) combined with `unwind-protect` creates air-tight scope enforcement with a single line of Lisp, proving its mettle for interpreter design.*
 
 ### Milestone 5a: Functions & Closures
+
 *Added first-class functions and closures. By using standard Common Lisp closures (a robust standard since 1984) and dynamic `unwind-protect` for environments, passing Lox function closures is virtually free. Returning early out of deeply nested Lox scopes involves a simple Lisp `(throw 'lox-return value)` matched by a `(catch 'lox-return ...)` in the callable dispatcher—an elegant bypass to building complex Java ReturnExceptions.*
+
+### Milestone 5b: Classes & Object-Oriented Programming
+
+*Implemented Lox's class system, including instance property getters and setters, methods, and lexical `this` binding. In Common Lisp, handling dynamic property hash tables and binding closures to instances inside the environment takes just a few lines of code. Instantiation seamlessly routes through `lox-callable` logic via CLOS `defmethod`, resulting in a powerful OO system mapped over native Lisp hash maps and method pointers.*

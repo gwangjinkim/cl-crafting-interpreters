@@ -35,6 +35,9 @@
 (defmethod evaluate ((node variable-expr))
   (get-variable *environment* (token-lexeme (variable-name node)) (variable-name node)))
 
+(defmethod evaluate ((node this-expr))
+  (get-variable *environment* "this" (this-keyword node)))
+
 (defmethod evaluate ((node assign-expr))
   (let ((value (evaluate (assign-value node))))
     (assign-variable *environment* (token-lexeme (assign-name node)) value (assign-name node))
@@ -49,6 +52,20 @@
       (runtime-error (call-paren node) (format nil "Expected ~A arguments but got ~A."
                                          (arity callee) (length arguments))))
     (call-callable callee arguments)))
+
+(defmethod evaluate ((node get-expr))
+  (let ((object (evaluate (get-object node))))
+    (if (typep object 'lox-instance)
+        (get-property object (get-name node))
+        (runtime-error (get-name node) "Only instances have properties."))))
+
+(defmethod evaluate ((node set-expr))
+  (let ((object (evaluate (set-object node))))
+    (if (typep object 'lox-instance)
+        (let ((value (evaluate (set-value node))))
+          (set-property object (set-name node) value)
+          value)
+        (runtime-error (set-name node) "Only instances have fields."))))
 
 (defmethod evaluate ((node logical-expr))
   (let ((left (evaluate (logical-left node)))
@@ -214,6 +231,66 @@
     (when (stmt-return-value stmt)
           (setf value (evaluate (stmt-return-value stmt))))
     (throw 'lox-return value)))
+
+(defclass lox-class (lox-callable)
+    ((name :initarg :name :reader lox-class-name)
+     (methods :initarg :methods :reader lox-class-methods)))
+
+(defmethod print-object ((class lox-class) stream)
+  (format stream "<class ~A>" (lox-class-name class)))
+
+(defmethod arity ((class lox-class))
+  (let ((initializer (gethash "init" (lox-class-methods class))))
+    (if initializer
+        (arity initializer)
+        0)))
+
+(defmethod call-callable ((class lox-class) arguments)
+  (let ((instance (make-instance 'lox-instance :class class)))
+    (let ((initializer (gethash "init" (lox-class-methods class))))
+      (when initializer
+            (call-callable (bind-method initializer instance) arguments)))
+    instance))
+
+(defclass lox-instance ()
+    ((class :initarg :class :reader lox-instance-class)
+     (fields :initform (make-hash-table :test 'equal) :reader lox-instance-fields)))
+
+(defmethod print-object ((instance lox-instance) stream)
+  (format stream "<~A instance>" (lox-class-name (lox-instance-class instance))))
+
+(defun get-property (instance name)
+  (multiple-value-bind (val present) (gethash (token-lexeme name) (lox-instance-fields instance))
+    (if present
+        val
+        (let ((method (gethash (token-lexeme name) (lox-class-methods (lox-instance-class instance)))))
+          (if method
+              (bind-method method instance)
+              (runtime-error name (format nil "Undefined property '~A'." (token-lexeme name))))))))
+
+(defun set-property (instance name value)
+  (setf (gethash (token-lexeme name) (lox-instance-fields instance)) value))
+
+(defun bind-method (method instance)
+  (let ((environment (make-environment (lox-function-closure method))))
+    (define-variable environment "this" instance)
+    (make-instance 'lox-function
+      :declaration (lox-function-declaration method)
+      :closure environment)))
+
+(defmethod execute ((stmt class-stmt))
+  (define-variable *environment* (token-lexeme (stmt-class-name stmt)) nil)
+  (let ((methods (make-hash-table :test 'equal)))
+    (dolist (method-stmt (stmt-class-methods stmt))
+      (let ((function (make-instance 'lox-function
+                        :declaration method-stmt
+                        :closure *environment*)))
+        (setf (gethash (token-lexeme (stmt-function-name method-stmt)) methods) function)))
+    (let ((klass (make-instance 'lox-class
+                   :name (token-lexeme (stmt-class-name stmt))
+                   :methods methods)))
+      (assign-variable *environment* (token-lexeme (stmt-class-name stmt)) klass (stmt-class-name stmt))))
+  nil)
 
 (defun interpret (statements)
   "Main entry point for evaluating a list of AST statements."

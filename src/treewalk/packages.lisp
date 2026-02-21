@@ -8,17 +8,20 @@
            :token-line
            ;; AST
            :expr :binary-expr :grouping-expr :literal-expr :unary-expr :variable-expr :assign-expr :logical-expr :call-expr
-           :stmt :expression-stmt :print-stmt :var-stmt :block-stmt :if-stmt :while-stmt :function-stmt :return-stmt
+           :get-expr :set-expr :this-expr
+           :stmt :expression-stmt :print-stmt :var-stmt :block-stmt :if-stmt :while-stmt :function-stmt :return-stmt :class-stmt
            :binary-left :binary-operator :binary-right
            :literal-value :unary-operator :unary-right
            :variable-name :assign-name :assign-value
            :logical-left :logical-operator :logical-right
            :call-callee :call-paren :call-arguments
+           :get-object :get-name :set-object :set-name :set-value :this-keyword
            :stmt-expression :stmt-var-name :stmt-var-initializer
            :stmt-print-expr :stmt-block-statements
            :stmt-if-condition :stmt-if-then :stmt-if-else
            :stmt-while-condition :stmt-while-body
            :stmt-function-name :stmt-function-params :stmt-function-body
+           :stmt-class-name :stmt-class-methods
            :stmt-return-keyword :stmt-return-value
            :grouping-expression
            ;; Parser

@@ -29,5 +29,6 @@
                          (:file "environment-tests")
                          (:file "evaluator-tests")
                          (:file "control-flow-tests")
-                         (:file "function-tests"))))
+                         (:file "function-tests")
+                         (:file "class-tests"))))
   :perform (test-op (o c) (symbol-call :fiveam '#:run! :cl-lox-tw-suite)))
