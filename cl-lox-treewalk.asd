@@ -10,7 +10,9 @@
                         ((:file "packages")
                          (:file "token" :depends-on ("packages"))
                          (:file "scanner" :depends-on ("token"))
-                         (:file "main" :depends-on ("scanner")))))
+                         (:file "ast" :depends-on ("packages"))
+                         (:file "parser" :depends-on ("scanner" "ast"))
+                         (:file "main" :depends-on ("parser")))))
   :in-order-to ((test-op (test-op "cl-lox-treewalk/tests"))))
 
 (defsystem "cl-lox-treewalk/tests"
@@ -18,5 +20,6 @@
   :components ((:module "tests"
                         :components
                         ((:file "main")
-                         (:file "scanner-tests" :depends-on ("main")))))
+                         (:file "scanner-tests" :depends-on ("main"))
+                         (:file "parser-tests" :depends-on ("scanner-tests")))))
   :perform (test-op (o c) (symbol-call :fiveam '#:run! :cl-lox-tw-suite)))

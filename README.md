@@ -38,3 +38,6 @@ make treewalk
 
 ### Milestone 1: Lexical Analysis (Scanner)
 *Built the lexical analyzer for the Tree-walk Interpreter. Lisp is remarkably well-suited for scanning text. By using local functions (`labels`) for state management (`advance`, `peek`, `match`), we avoided the need for complex object-oriented state tracking or messy global variables. The resulting single-pass scanner is elegant and maps the Lox syntax (as defined in `LEX-SPEC.md`) cleanly into Lisp structs. We also utilized Lisp's dynamic `hash-table` and `string-downcase` to efficiently route reserved keywords natively without relying on verbose string switch-cases common in Java or C.*
+
+### Milestone 2: Abstract Syntax Tree & Parser
+*Implemented the AST and the recursive descent parser. In Java, Bob Nystrom has to build a heavily boilerplate tool to generate Java classes and set up the Visitor pattern to emulate double dispatch. In Common Lisp, we simply defined the AST hierarchy using `defclass`. The parser leverages Lisp's dynamic and generic object system (CLOS) to instantly instantiate these types. This avoids thousands of lines of boilerplate and sets the foundation for an elegant evaluator using `defmethod`.*
