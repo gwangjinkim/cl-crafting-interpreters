@@ -6,22 +6,26 @@
   :author "Gwangjin Kim"
   :depends-on ()
   :components ((:module "src/treewalk"
+                        :serial t
                         :components
                         ((:file "packages")
-                         (:file "token" :depends-on ("packages"))
-                         (:file "scanner" :depends-on ("token"))
-                         (:file "ast" :depends-on ("packages"))
-                         (:file "parser" :depends-on ("scanner" "ast"))
-                         (:file "evaluator" :depends-on ("ast"))
-                         (:file "main" :depends-on ("parser")))))
+                         (:file "token")
+                         (:file "scanner")
+                         (:file "ast")
+                         (:file "parser")
+                         (:file "environment")
+                         (:file "evaluator")
+                         (:file "main"))))
   :in-order-to ((test-op (test-op "cl-lox-treewalk/tests"))))
 
 (defsystem "cl-lox-treewalk/tests"
   :depends-on ("cl-lox-treewalk" "fiveam")
   :components ((:module "tests"
+                        :serial t
                         :components
                         ((:file "main")
-                         (:file "scanner-tests" :depends-on ("main"))
-                         (:file "parser-tests" :depends-on ("scanner-tests"))
-                         (:file "evaluator-tests" :depends-on ("parser-tests")))))
+                         (:file "scanner-tests")
+                         (:file "parser-tests")
+                         (:file "environment-tests")
+                         (:file "evaluator-tests"))))
   :perform (test-op (o c) (symbol-call :fiveam '#:run! :cl-lox-tw-suite)))

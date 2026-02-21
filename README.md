@@ -44,3 +44,6 @@ make treewalk
 
 ### Milestone 3: Evaluation (Tree-walking)
 *Implemented the evaluation engine. While Java requires double-dispatch Visitor pattern boilerplate, Common Lisp's CLOS handles this natively and transparently. We defined a generic `evaluate` function and provided `defmethod` implementations for each AST node type (`literal-expr`, `binary-expr`, etc.). The Lisp runtime dynamically dispatches to the correct method based on the node's type, making the evaluator extremely clean and extensible.*
+
+### Milestone 4.5: Control Flow
+*Implemented traditional 'if', 'while', and 'for' control flow structures. In Java, building the environment stack requires messy scoping objects. Common Lisp's dynamic scoping (e.g. `(let ((*environment* ...)) ...)`) combined with `unwind-protect` creates air-tight scope enforcement with a single line of Lisp, proving its mettle for interpreter design.*
