@@ -16,4 +16,6 @@
            :stmt-print-expr :stmt-block-statements
            :grouping-expression
            ;; Parser
-           :parse :lox-parse-error :lox-parse-error-message))
+           :parse :lox-parse-error :lox-parse-error-message
+           ;; Evaluator
+           :evaluate :execute :interpret))

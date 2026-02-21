@@ -41,3 +41,6 @@ make treewalk
 
 ### Milestone 2: Abstract Syntax Tree & Parser
 *Implemented the AST and the recursive descent parser. In Java, Bob Nystrom has to build a heavily boilerplate tool to generate Java classes and set up the Visitor pattern to emulate double dispatch. In Common Lisp, we simply defined the AST hierarchy using `defclass`. The parser leverages Lisp's dynamic and generic object system (CLOS) to instantly instantiate these types. This avoids thousands of lines of boilerplate and sets the foundation for an elegant evaluator using `defmethod`.*
+
+### Milestone 3: Evaluation (Tree-walking)
+*Implemented the evaluation engine. While Java requires double-dispatch Visitor pattern boilerplate, Common Lisp's CLOS handles this natively and transparently. We defined a generic `evaluate` function and provided `defmethod` implementations for each AST node type (`literal-expr`, `binary-expr`, etc.). The Lisp runtime dynamically dispatches to the correct method based on the node's type, making the evaluator extremely clean and extensible.*
