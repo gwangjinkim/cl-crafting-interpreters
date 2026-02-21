@@ -18,6 +18,24 @@ This project builds three distinct runners for the Lox language:
    - The "Cheat Code" version.
    - Showcases Lisp's ultimate superpower: using Reader Macros to natively absorb Lox syntax and compile it instantly to native x86 machine code via SBCL.
 
+## 🧠 How It Works: The Execution Pipeline
+
+For those unfamiliar with interpreter design or Common Lisp, here is a high-level overview of how `cl-lox-treewalk` executes a Lox program. The process is a classic interpreter pipeline:
+
+1. **Scanning (Lexical Analysis)**  
+   *Input: Raw Source Code String ➡️ Output: List of Tokens*  
+   The scanner reads the raw text of the Lox program character by character and groups them into meaningful "words" called **Tokens** (e.g., `VAR`, `IDENTIFIER("a")`, `EQUAL`, `NUMBER(1)`).
+
+2. **Parsing (Syntax Analysis)**  
+   *Input: List of Tokens ➡️ Output: Abstract Syntax Tree (AST)*  
+   The parser enforces the grammatical rules of the Lox language using a technique called *Recursive Descent*. It takes the linear list of tokens and organizes them into a hierarchical, deeply nested tree built out of Common Lisp Objects (CLOS). For example, `1 + 2 * 3` becomes a `binary-expr` tree where `*` is placed deeper in the tree so it evaluates before `+`.
+
+3. **Evaluation (Tree-Walking)**  
+   *Input: Abstract Syntax Tree ➡️ Output: Runtime Values & Side Effects*  
+   The evaluator traverses (or "walks") the AST, taking action on each node. In typical object-oriented languages like Java, this step often requires verbose design patterns (like the Visitor Pattern) so the evaluator knows exactly *what* code to run for *which* node.
+
+   In Common Lisp, we use **Generic Functions (`defmethod`)**. We define one `evaluate` function, and Lisp's runtime dynamically dispatches the correct logic based on the AST node's type, making the evaluator extremely clean. Features like environments, variable scoping, and object-oriented `class` instances are implemented by mapping them elegantly to native Lisp hash tables, lists, and closures.
+
 ## 🛠 Building and Testing
 
 We use `SBCL` and `ASDF` for building, wrapped in a simple `Makefile`.
