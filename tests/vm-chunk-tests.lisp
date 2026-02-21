@@ -10,9 +10,9 @@
 
 (test chunk-basic-write
       (let ((chunk (cl-lox-vm:make-chunk)))
-        (cl-lox-vm:write-chunk chunk cl-lox-vm:op-return 123)
+        (cl-lox-vm:write-chunk chunk cl-lox-vm:+op-return+ 123)
         (is (= 1 (cl-lox-vm::chunk-count chunk)))
-        (is (= cl-lox-vm:op-return (aref (cl-lox-vm::chunk-code chunk) 0)))
+        (is (= cl-lox-vm:+op-return+ (aref (cl-lox-vm::chunk-code chunk) 0)))
         (is (= 123 (aref (cl-lox-vm::chunk-lines chunk) 0)))
         (cl-lox-vm::free-chunk chunk)
         (is (= 0 (cl-lox-vm::chunk-count chunk)))))
@@ -21,7 +21,7 @@
       (let* ((chunk (cl-lox-vm:make-chunk))
              (index (cl-lox-vm:add-constant chunk 1.2d0)))
         (is (= 0 index))
-        (cl-lox-vm:write-chunk chunk cl-lox-vm:op-constant 123)
+        (cl-lox-vm:write-chunk chunk cl-lox-vm:+op-constant+ 123)
         (cl-lox-vm:write-chunk chunk index 123)
 
         (let* ((constants (cl-lox-vm::chunk-constants chunk))

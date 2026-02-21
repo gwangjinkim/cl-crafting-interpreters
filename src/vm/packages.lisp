@@ -16,7 +16,12 @@
           #:interpret
 
           ; OpCodes (enumerated below)
-          #:op-return
-          #:op-constant))
+          #:+op-return+
+          #:+op-constant+
+          #:+op-add+
+          #:+op-subtract+
+          #:+op-multiply+
+          #:+op-divide+
+          #:+op-negate+))
 
 (in-package #:cl-lox-vm)

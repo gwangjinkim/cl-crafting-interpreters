@@ -77,3 +77,6 @@ make treewalk
 ### Milestone 5b: Classes & Object-Oriented Programming
 
 *Implemented Lox's class system, including instance property getters and setters, methods, and lexical `this` binding. In Common Lisp, handling dynamic property hash tables and binding closures to instances inside the environment takes just a few lines of code. Instantiation seamlessly routes through `lox-callable` logic via CLOS `defmethod`, resulting in a powerful OO system mapped over native Lisp hash maps and method pointers.*
+
+### Milestone 6 & 7: Chunks of Bytecode & The VM
+*We've officially switched tracks to the Bytecode Virtual Machine! Unlike the Object-Oriented Tree-walk interpreter, the VM is entirely array-driven. We use Common Lisp's `(simple-array (unsigned-byte 8))` to create hyper-dense unboxed memory arrays for our instructions—achieving the same memory profile and layout as C. We then built a core `run` loop that dispatches directly off these opcodes (`+op-add+`, `+op-constant+`) and heavily leverages Lisp's macro capabilities to print gorgeous disassembly traces.*

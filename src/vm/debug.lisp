@@ -21,6 +21,11 @@
     (cond
      ((= instruction +op-return+) (simple-instruction "OP_RETURN" offset stream))
      ((= instruction +op-constant+) (constant-instruction "OP_CONSTANT" chunk offset stream))
+     ((= instruction +op-add+) (simple-instruction "OP_ADD" offset stream))
+     ((= instruction +op-subtract+) (simple-instruction "OP_SUBTRACT" offset stream))
+     ((= instruction +op-multiply+) (simple-instruction "OP_MULTIPLY" offset stream))
+     ((= instruction +op-divide+) (simple-instruction "OP_DIVIDE" offset stream))
+     ((= instruction +op-negate+) (simple-instruction "OP_NEGATE" offset stream))
      (t
        (format stream "Unknown opcode ~A~%" instruction)
        (1+ offset)))))

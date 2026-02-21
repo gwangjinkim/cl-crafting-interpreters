@@ -9,7 +9,8 @@
                         :components ((:file "packages")
                                      (:file "value")
                                      (:file "chunk")
-                                     (:file "debug"))))
+                                     (:file "debug")
+                                     (:file "vm"))))
   :in-order-to ((test-op (test-op "cl-lox-vm/tests"))))
 
 (asdf:defsystem #:cl-lox-vm/tests
@@ -17,5 +18,6 @@
   :serial t
   :components ((:module "tests"
                         :serial t
-                        :components ((:file "vm-chunk-tests"))))
+                        :components ((:file "vm-chunk-tests")
+                                     (:file "vm-arithmetic-tests"))))
   :perform (test-op (o c) (symbol-call :fiveam '#:run! :cl-lox-vm-suite)))

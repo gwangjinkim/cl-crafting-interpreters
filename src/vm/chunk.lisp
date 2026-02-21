@@ -5,6 +5,11 @@
 ;; Define Opcodes manually for now to act like C enums
 (defconstant +op-return+ 0)
 (defconstant +op-constant+ 1)
+(defconstant +op-add+ 2)
+(defconstant +op-subtract+ 3)
+(defconstant +op-multiply+ 4)
+(defconstant +op-divide+ 5)
+(defconstant +op-negate+ 6)
 
 (defstruct chunk
   "A dynamic array of bytecode instructions and constants."
