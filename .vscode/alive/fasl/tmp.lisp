@@ -1,26 +1,82 @@
 (in-package :cl-lox-treewalk)
 
-(defun run-file (path)
-  "Run a Lox source file."
-  (format t "Running file: ~A~%" path))
+;; Base class for all AST nodes
+(defclass expr () ())
 
-(defun run-prompt ()
-  "Run the interactive Lox REPL."
-  (loop
-   (format t "> ")
-   (force-output)
-   (let ((line (read-line *standard-input* nil nil)))
-     (unless line (return))
-     (format t "Executed: ~A~%" line))))
+;; Expressions
+(defclass binary-expr (expr)
+    ((left :initarg :left :accessor binary-left)
+     (operator :initarg :operator :accessor binary-operator)
+     (right :initarg :right :accessor binary-right)))
 
-(defun main ()
-  "Entry point for the Tree-walk Lox interpreter."
-  (let ((args sb-ext:*posix-argv*))
-    (cond
-     ((> (length args) 2)
-       (format *error-output* "Usage: lox-tw [script]~%")
-       (sb-ext:exit :code 64))
-     ((= (length args) 2)
-       (run-file (second args)))
-     (t
-       (run-prompt)))))
+(defclass grouping-expr (expr)
+    ((expression :initarg :expression :accessor grouping-expression)))
+
+(defclass literal-expr (expr)
+    ((value :initarg :value :accessor literal-value)))
+
+(defclass unary-expr (expr)
+    ((operator :initarg :operator :accessor unary-operator)
+     (right :initarg :right :accessor unary-right)))
+
+(defclass variable-expr (expr)
+    ((name :initarg :name :accessor variable-name)))
+
+(defclass assign-expr (expr)
+    ((name :initarg :name :accessor assign-name)
+     (value :initarg :value :accessor assign-value)))
+
+
+;; Represents a logical operator expression (e.g. `and`, `or`)
+(defclass logical-expr (expr)
+    ((left :initarg :left :accessor logical-left)
+     (operator :initarg :operator :accessor logical-operator)
+     (right :initarg :right :accessor logical-right)))
+
+;; Represents a function call expression (e.g. `foo(1, 2)`)
+(defclass call-expr (expr)
+    ((callee :initarg :callee :accessor call-callee)
+     (paren :initarg :paren :accessor call-paren)
+     (arguments :initarg :arguments :accessor call-arguments)))
+
+
+;; Base class for statements
+(defclass stmt () ())
+
+(defclass expression-stmt (stmt)
+    ((expression :initarg :expression :accessor stmt-expression)))
+
+(defclass print-stmt (stmt)
+    ((expression :initarg :expression :accessor stmt-print-expr)))
+
+(defclass var-stmt (stmt)
+    ((name :initarg :name :accessor stmt-var-name)
+     (initializer :initarg :initializer :accessor stmt-var-initializer)))
+
+;; Represents a block of statements {...}
+(defclass block-stmt (stmt)
+    ((statements :initarg :statements :accessor stmt-block-statements)))
+
+;; Represents an if/else conditional statement
+(defclass if-stmt (stmt)
+    ((condition :initarg :condition :accessor stmt-if-condition)
+     (then-branch :initarg :then-branch :accessor stmt-if-then)
+     (else-branch :initarg :else-branch :accessor stmt-if-else
+                  :initform nil)))
+
+;; Represents a while loop
+(defclass while-stmt (stmt)
+    ((condition :initarg :condition :accessor stmt-while-condition)
+     (body :initarg :body :accessor stmt-while-body)))
+
+;; Represents a function declaration
+(defclass function-stmt (stmt)
+    ((name :initarg :name :accessor stmt-function-name)
+     (params :initarg :params :accessor stmt-function-params)
+     (body :initarg :body :accessor stmt-function-body)))
+
+;; Represents a return statement
+(defclass return-stmt (stmt)
+    ((keyword :initarg :keyword :accessor stmt-return-keyword)
+     (value :initarg :value :accessor stmt-return-value
+            :initform nil)))

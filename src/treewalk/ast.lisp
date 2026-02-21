@@ -26,11 +26,14 @@
     ((name :initarg :name :accessor assign-name)
      (value :initarg :value :accessor assign-value)))
 
+
+;; Represents a logical operator expression (e.g. `and`, `or`)
 (defclass logical-expr (expr)
     ((left :initarg :left :accessor logical-left)
      (operator :initarg :operator :accessor logical-operator)
      (right :initarg :right :accessor logical-right)))
 
+;; Represents a function call expression (e.g. `foo(1, 2)`)
 (defclass call-expr (expr)
     ((callee :initarg :callee :accessor call-callee)
      (paren :initarg :paren :accessor call-paren)
@@ -50,23 +53,30 @@
     ((name :initarg :name :accessor stmt-var-name)
      (initializer :initarg :initializer :accessor stmt-var-initializer)))
 
+;; Represents a block of statements {...}
 (defclass block-stmt (stmt)
     ((statements :initarg :statements :accessor stmt-block-statements)))
 
+;; Represents an if/else conditional statement
 (defclass if-stmt (stmt)
     ((condition :initarg :condition :accessor stmt-if-condition)
      (then-branch :initarg :then-branch :accessor stmt-if-then)
-     (else-branch :initarg :else-branch :accessor stmt-if-else)))
+     (else-branch :initarg :else-branch :accessor stmt-if-else
+                  :initform nil)))
 
+;; Represents a while loop
 (defclass while-stmt (stmt)
     ((condition :initarg :condition :accessor stmt-while-condition)
      (body :initarg :body :accessor stmt-while-body)))
 
+;; Represents a function declaration
+(defclass function-stmt (stmt)
+    ((name :initarg :name :accessor stmt-function-name)
+     (params :initarg :params :accessor stmt-function-params)
+     (body :initarg :body :accessor stmt-function-body)))
+
+;; Represents a return statement
 (defclass return-stmt (stmt)
     ((keyword :initarg :keyword :accessor stmt-return-keyword)
-     (value :initarg :value :accessor stmt-return-value)))
-
-(defclass function-stmt (stmt)
-    ((name :initarg :name :accessor stmt-fun-name)
-     (params :initarg :params :accessor stmt-fun-params)
-     (body :initarg :body :accessor stmt-fun-body)))
+     (value :initarg :value :accessor stmt-return-value
+            :initform nil)))

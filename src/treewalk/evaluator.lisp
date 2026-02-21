@@ -1,5 +1,27 @@
 (in-package :cl-lox-treewalk)
 
+;; The global environment used by the interpreter
+(defvar *global-environment* (make-environment))
+(defvar *environment* *global-environment*)
+
+(defclass lox-callable ()
+    ((arity :initarg :arity :reader callable-arity)
+     (call-func :initarg :call-func :reader callable-func)))
+
+(defmethod arity ((callable lox-callable))
+  (callable-arity callable))
+
+(defmethod call-callable ((callable lox-callable) arguments)
+  (funcall (callable-func callable) arguments))
+
+(define-variable *global-environment* "clock"
+                 (make-instance 'lox-callable
+                   :arity 0
+                   :call-func (lambda (args)
+                                (declare (ignore args))
+                                ;; Return current time in seconds as float
+                                (float (/ (get-internal-real-time) internal-time-units-per-second)))))
+
 ;; The evaluate generic function will dispatch dynamically based on the AST node type.
 (defgeneric evaluate (node)
   (:documentation "Evaluates an AST node and returns a Lox runtime value."))
@@ -9,6 +31,32 @@
 
 (defmethod evaluate ((node grouping-expr))
   (evaluate (grouping-expression node)))
+
+(defmethod evaluate ((node variable-expr))
+  (get-variable *environment* (token-lexeme (variable-name node)) (variable-name node)))
+
+(defmethod evaluate ((node assign-expr))
+  (let ((value (evaluate (assign-value node))))
+    (assign-variable *environment* (token-lexeme (assign-name node)) value (assign-name node))
+    value))
+
+(defmethod evaluate ((node call-expr))
+  (let ((callee (evaluate (call-callee node)))
+        (arguments (mapcar #'evaluate (call-arguments node))))
+    (unless (typep callee 'lox-callable)
+      (runtime-error (call-paren node) "Can only call functions and classes."))
+    (unless (= (length arguments) (arity callee))
+      (runtime-error (call-paren node) (format nil "Expected ~A arguments but got ~A."
+                                         (arity callee) (length arguments))))
+    (call-callable callee arguments)))
+
+(defmethod evaluate ((node logical-expr))
+  (let ((left (evaluate (logical-left node)))
+        (operator (logical-operator node)))
+    (if (eq (token-type operator) :or)
+        (if (is-truthy left) (return-from evaluate left))
+        (if (not (is-truthy left)) (return-from evaluate left)))
+    (evaluate (logical-right node))))
 
 ;; Helper functions for Lox runtime truthiness and equality
 (defun is-truthy (value)
@@ -105,6 +153,67 @@
     ;; Lox prints nil as "nil", numbers nicely
     (format t "~A~%" (if (null value) "nil" value))
     nil))
+
+(defmethod execute ((stmt var-stmt))
+  (let ((value nil))
+    (when (stmt-var-initializer stmt)
+          (setf value (evaluate (stmt-var-initializer stmt))))
+    (define-variable *environment* (token-lexeme (stmt-var-name stmt)) value))
+  nil)
+
+(defmethod execute ((stmt if-stmt))
+  (if (is-truthy (evaluate (stmt-if-condition stmt)))
+      (execute (stmt-if-then stmt))
+      (when (stmt-if-else stmt)
+            (execute (stmt-if-else stmt))))
+  nil)
+
+(defmethod execute ((stmt while-stmt))
+  (loop while (is-truthy (evaluate (stmt-while-condition stmt)))
+        do (execute (stmt-while-body stmt)))
+  nil)
+
+(defun execute-block (statements env)
+  (let ((previous *environment*))
+    (unwind-protect
+        (progn
+         (setf *environment* env)
+         (dolist (stmt statements)
+           (execute stmt)))
+      (setf *environment* previous))))
+
+(defmethod execute ((stmt block-stmt))
+  (execute-block (stmt-block-statements stmt) (make-environment *environment*))
+  nil)
+
+(defclass lox-function (lox-callable)
+    ((declaration :initarg :declaration :reader lox-function-declaration)
+     (closure :initarg :closure :reader lox-function-closure)))
+
+(defmethod arity ((func lox-function))
+  (length (stmt-function-params (lox-function-declaration func))))
+
+(defmethod call-callable ((func lox-function) arguments)
+  (let ((environment (make-environment (lox-function-closure func))))
+    (loop for param in (stmt-function-params (lox-function-declaration func))
+          for arg in arguments
+          do (define-variable environment (token-lexeme param) arg))
+    (catch 'lox-return
+      (execute-block (stmt-function-body (lox-function-declaration func)) environment)
+      nil)))
+
+(defmethod execute ((stmt function-stmt))
+  (let ((function (make-instance 'lox-function
+                    :declaration stmt
+                    :closure *environment*)))
+    (define-variable *environment* (token-lexeme (stmt-function-name stmt)) function))
+  nil)
+
+(defmethod execute ((stmt return-stmt))
+  (let ((value nil))
+    (when (stmt-return-value stmt)
+          (setf value (evaluate (stmt-return-value stmt))))
+    (throw 'lox-return value)))
 
 (defun interpret (statements)
   "Main entry point for evaluating a list of AST statements."

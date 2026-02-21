@@ -47,3 +47,6 @@ make treewalk
 
 ### Milestone 4.5: Control Flow
 *Implemented traditional 'if', 'while', and 'for' control flow structures. In Java, building the environment stack requires messy scoping objects. Common Lisp's dynamic scoping (e.g. `(let ((*environment* ...)) ...)`) combined with `unwind-protect` creates air-tight scope enforcement with a single line of Lisp, proving its mettle for interpreter design.*
+
+### Milestone 5a: Functions & Closures
+*Added first-class functions and closures. By using standard Common Lisp closures (a robust standard since 1984) and dynamic `unwind-protect` for environments, passing Lox function closures is virtually free. Returning early out of deeply nested Lox scopes involves a simple Lisp `(throw 'lox-return value)` matched by a `(catch 'lox-return ...)` in the callable dispatcher—an elegant bypass to building complex Java ReturnExceptions.*

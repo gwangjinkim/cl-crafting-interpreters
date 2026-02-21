@@ -71,6 +71,7 @@
 (defun lox-declaration ()
   (handler-case
       (cond
+       ((match-token :fun) (function-declaration "function"))
        ((match-token :var) (var-declaration))
        (t (statement)))
     (lox-parse-error (c)
@@ -86,16 +87,95 @@
       (consume :semicolon "Expect ';' after variable declaration.")
       (make-instance 'var-stmt :name name :initializer initializer))))
 
+(defun function-declaration (kind)
+  (let ((name (consume :identifier (format nil "Expect ~A name." kind))))
+    (consume :left-paren (format nil "Expect '(' after ~A name." kind))
+    (let ((parameters nil))
+      (unless (lox-check-type :right-paren)
+        (push (consume :identifier "Expect parameter name.") parameters)
+        (loop while (match-token :comma)
+              do (when (>= (length parameters) 255)
+                       (error 'lox-parse-error :token (peek-token) :message "Can't have more than 255 parameters."))
+                (push (consume :identifier "Expect parameter name.") parameters)))
+      (consume :right-paren "Expect ')' after parameters.")
+      (consume :left-brace (format nil "Expect '{' before ~A body." kind))
+      (let ((body (block-statement)))
+        (make-instance 'function-stmt :name name :params (nreverse parameters) :body body)))))
+
 (defun statement ()
   (cond
+   ((match-token :for) (for-statement))
+   ((match-token :if) (if-statement))
    ((match-token :print) (print-statement))
+   ((match-token :return) (return-statement))
+   ((match-token :while) (while-statement))
    ((match-token :left-brace) (make-instance 'block-stmt :statements (block-statement)))
    (t (expression-statement))))
+
+(defun if-statement ()
+  (consume :left-paren "Expect '(' after 'if'.")
+  (let ((condition (expression)))
+    (consume :right-paren "Expect ')' after if condition.")
+    (let ((then-branch (statement))
+          (else-branch nil))
+      (when (match-token :else)
+            (setf else-branch (statement)))
+      (make-instance 'if-stmt :condition condition :then-branch then-branch :else-branch else-branch))))
+
+(defun while-statement ()
+  (consume :left-paren "Expect '(' after 'while'.")
+  (let ((condition (expression)))
+    (consume :right-paren "Expect ')' after condition.")
+    (let ((body (statement)))
+      (make-instance 'while-stmt :condition condition :body body))))
+
+(defun for-statement ()
+  (consume :left-paren "Expect '(' after 'for'.")
+  (let ((initializer (cond
+                      ((match-token :semicolon) nil)
+                      ((match-token :var) (var-declaration))
+                      (t (expression-statement))))
+        (condition nil)
+        (increment nil)
+        (body nil))
+
+    (if (not (lox-check-type :semicolon))
+        (setf condition (expression)))
+    (consume :semicolon "Expect ';' after loop condition.")
+
+    (if (not (lox-check-type :right-paren))
+        (setf increment (expression)))
+    (consume :right-paren "Expect ')' after for clauses.")
+
+    (setf body (statement))
+
+    ;; Desugar for loop to while loop
+    (when increment
+          (setf body (make-instance 'block-stmt
+                       :statements (list body (make-instance 'expression-stmt :expression increment)))))
+
+    (when (null condition)
+          (setf condition (make-instance 'literal-expr :value t)))
+
+    (setf body (make-instance 'while-stmt :condition condition :body body))
+
+    (when initializer
+          (setf body (make-instance 'block-stmt :statements (list initializer body))))
+
+    body))
 
 (defun print-statement ()
   (let ((value (expression)))
     (consume :semicolon "Expect ';' after value.")
     (make-instance 'print-stmt :expression value)))
+
+(defun return-statement ()
+  (let ((keyword (previous-token))
+        (value nil))
+    (unless (lox-check-type :semicolon)
+      (setf value (expression)))
+    (consume :semicolon "Expect ';' after return value.")
+    (make-instance 'return-stmt :keyword keyword :value value)))
 
 (defun expression-statement ()
   (let ((expr (expression)))
@@ -114,7 +194,7 @@
   (assignment))
 
 (defun assignment ()
-  (let ((expr (equality)))
+  (let ((expr (logic-or)))
     (if (match-token :equal)
         (let ((equals (previous-token))
               (value (assignment)))
@@ -122,6 +202,23 @@
               (make-instance 'assign-expr :name (variable-name expr) :value value)
               (error 'lox-parse-error :token equals :message "Invalid assignment target.")))
         expr)))
+
+(defun logic-or ()
+  (let ((expr (logic-and)))
+    (loop while (match-token :or)
+          do (let ((operator (previous-token))
+                   (right (logic-and)))
+               (setf expr (make-instance 'logical-expr :left expr :operator operator :right right))))
+    expr))
+
+(defun logic-and ()
+  (let ((expr (equality)))
+    (loop while (match-token :and)
+          do (let ((operator (previous-token))
+                   (right (equality)))
+               (setf expr (make-instance 'logical-expr :left expr :operator operator :right right))))
+    expr))
+
 
 (defun equality ()
   (let ((expr (comparison)))
@@ -160,7 +257,27 @@
       (let ((operator (previous-token))
             (right (unary)))
         (make-instance 'unary-expr :operator operator :right right))
-      (primary)))
+      (call)))
+
+(defun call ()
+  (let ((expr (primary)))
+    (loop
+     (cond
+      ((match-token :left-paren)
+        (setf expr (finish-call expr)))
+      (t (return))))
+    expr))
+
+(defun finish-call (callee)
+  (let ((arguments nil))
+    (unless (lox-check-type :right-paren)
+      (push (expression) arguments)
+      (loop while (match-token :comma)
+            do (when (>= (length arguments) 255)
+                     (error 'lox-parse-error :token (peek-token) :message "Can't have more than 255 arguments."))
+              (push (expression) arguments)))
+    (consume :right-paren "Expect ')' after arguments.")
+    (make-instance 'call-expr :callee callee :paren (previous-token) :arguments (nreverse arguments))))
 
 (defun primary ()
   (cond
