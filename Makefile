@@ -13,3 +13,6 @@ treewalk:
 		--eval '(sb-ext:save-lisp-and-die "lox-tw" :toplevel (function cl-lox-treewalk:main) :executable t)'
 
 .PHONY: test treewalk
+
+vm:
+	$(SBCL) --eval "(asdf:test-system :cl-lox-vm)" --quit
