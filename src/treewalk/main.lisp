@@ -1,7 +1,3 @@
-(defpackage :cl-lox-treewalk
-  (:use :cl)
-  (:export :main))
-
 (in-package :cl-lox-treewalk)
 
 (defun run-file (path)

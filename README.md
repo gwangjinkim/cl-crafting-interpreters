@@ -35,3 +35,6 @@ make treewalk
 ### Setup & Foundation
 
 *Initialized Git, defined the project ASDF systems, and configured the central test runner (`make test`). Lisp's ASDF system allows us to elegantly partition the Tree-walk, VM, and tests into separate loadable definitions within the same physical directory structure.*
+
+### Milestone 1: Lexical Analysis (Scanner)
+*Built the lexical analyzer for the Tree-walk Interpreter. Lisp is remarkably well-suited for scanning text. By using local functions (`labels`) for state management (`advance`, `peek`, `match`), we avoided the need for complex object-oriented state tracking or messy global variables. The resulting single-pass scanner is elegant and maps the Lox syntax (as defined in `LEX-SPEC.md`) cleanly into Lisp structs. We also utilized Lisp's dynamic `hash-table` and `string-downcase` to efficiently route reserved keywords natively without relying on verbose string switch-cases common in Java or C.*
